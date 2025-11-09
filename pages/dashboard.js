@@ -1,5 +1,8 @@
+// pages/dashboard.js
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 import Navbar from "@/components/Navbar";
 import ChatbotFloating from "@/components/ChatbotFloating";
 import GeneratorCard from "@/components/GeneratorCard";
@@ -10,90 +13,121 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("animepfp_user");
-    if (!storedUser) router.push("/");
-    else setUser(JSON.parse(storedUser));
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) router.push("/login");
+      else setUser(currentUser);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const generators = [
+  if (!user)
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        <p className="text-xl">Loading your ENIME.ai dashboard...</p>
+      </div>
+    );
+
+  // Placeholder data for demo
+  const exampleGenerators = [
     {
-      title: "Cool Cyberpunk Samurai",
-      image: "https://images.unsplash.com/photo-1623059073135-1c0c8c1b0e74?auto=format&fit=crop&w=800&q=80",
-      desc: "Neon-lit samurai with futuristic armor and glowing eyes.",
+      id: 1,
+      name: "Cool Anime Generator",
+      exampleImg: "https://source.unsplash.com/200x200/?anime,character",
+      creator: "ENIME.ai",
     },
     {
-      title: "Soft Girl Vibes",
-      image: "https://images.unsplash.com/photo-1618005198919-d3d4b8b1f9b2?auto=format&fit=crop&w=800&q=80",
-      desc: "Cute and cozy anime aesthetic with pastel tones.",
-    },
-    {
-      title: "Dark Fantasy Knight",
-      image: "https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80",
-      desc: "Mysterious armored warrior surrounded by shadows.",
+      id: 2,
+      name: "Chibi Style Generator",
+      exampleImg: "https://source.unsplash.com/200x200/?anime,chibi",
+      creator: "ENIME.ai",
     },
   ];
 
-  const recents = [
+  const recentGenerations = [
     {
-      image: "https://images.unsplash.com/photo-1603791452906-9cd9d3ca82c2?auto=format&fit=crop&w=300&q=80",
-      prompt: "Cool samurai with cyberpunk eyes",
+      id: 1,
+      name: "My First PFP",
+      img: "https://source.unsplash.com/200x200/?anime,avatar",
+      generator: "Cool Anime Generator",
     },
     {
-      image: "https://images.unsplash.com/photo-1599940824399-b87987ceb72f?auto=format&fit=crop&w=300&q=80",
-      prompt: "Pastel girl with floating stars",
+      id: 2,
+      name: "Chibi Fun",
+      img: "https://source.unsplash.com/200x200/?anime,character",
+      generator: "Chibi Style Generator",
     },
-  ];
-
-  const randomIdeas = [
-    "🔥 Mecha Girl With Wings",
-    "🌸 Soft Glow School Uniform",
-    "🧙‍♂️ Magical Knight with Spellbook",
-    "🦊 Fox Spirit With Neon Eyes",
-    "👹 Demon Boy With Chains"
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black text-white relative">
       <Navbar />
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-accent mb-4">
-          Welcome back, {user?.name || "User"} 👋
-        </h2>
 
-        {/* CREATE BUTTON */}
-        <div className="flex justify-end mb-4">
-          <button className="bg-accent text-black px-4 py-2 rounded-lg font-semibold hover:scale-105 transition">
-            + Create AI Generator
-          </button>
-        </div>
+      <main className="p-6 max-w-7xl mx-auto">
+        {/* Welcome Section */}
+        <section className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-accent mb-2">
+            Welcome back, {user.email} 👋
+          </h1>
+          <p className="text-gray-400 text-lg">
+            Explore and create AI anime PFPs on ENIME.ai
+          </p>
+        </section>
 
-        {/* MAIN CONTENT */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {generators.map((gen, i) => (
-            <GeneratorCard key={i} {...gen} />
-          ))}
-        </div>
-
-        {/* RECENT GENERATIONS */}
-        <h3 className="text-xl font-semibold mt-10 mb-3 text-accent">Your Recent Generations</h3>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {recents.map((r, i) => (
-            <RecentGenerationCard key={i} {...r} />
-          ))}
-        </div>
-
-        {/* RANDOM IDEAS */}
-        <h3 className="text-xl font-semibold mt-10 mb-3 text-accent">Random AI Ideas 💡</h3>
-        <div className="bg-darkcard p-4 rounded-xl shadow-md text-gray-300">
-          <ul className="list-disc ml-6 space-y-1">
-            {randomIdeas.map((idea, i) => (
-              <li key={i}>{idea}</li>
+        {/* Generators Section */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold text-accent mb-4">
+            Your Generators
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {exampleGenerators.map((gen) => (
+              <GeneratorCard key={gen.id} generator={gen} />
             ))}
-          </ul>
-        </div>
-      </div>
+          </div>
+        </section>
 
-      {/* FLOATING CHATBOT */}
+        {/* Recent Generations Section */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold text-accent mb-4">
+            Recent Generations
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {recentGenerations.map((gen) => (
+              <RecentGenerationCard key={gen.id} generation={gen} />
+            ))}
+          </div>
+        </section>
+
+        {/* Random AI Ideas Section */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold text-accent mb-4">
+            Random AI Ideas
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="bg-darkcard p-4 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+              <h3 className="text-white font-semibold mb-2">
+                Magical Girl PFP
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Generate a magical girl anime avatar instantly!
+              </p>
+            </div>
+            <div className="bg-darkcard p-4 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+              <h3 className="text-white font-semibold mb-2">Cyberpunk PFP</h3>
+              <p className="text-gray-400 text-sm">
+                Futuristic cyberpunk anime avatar generator.
+              </p>
+            </div>
+            <div className="bg-darkcard p-4 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+              <h3 className="text-white font-semibold mb-2">Chibi Fun</h3>
+              <p className="text-gray-400 text-sm">
+                Cute chibi anime avatars for your profile.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Floating Chatbot */}
       <ChatbotFloating />
     </div>
   );
